@@ -679,6 +679,17 @@ static void ath_regd_sanitize(struct ath_regulatory *reg)
 	reg->current_rd = 0x64;
 }
 
+/*
+ * Overrides the EEPROM regulatory domain with 0x00. Then,
+ * sets the country code to the default value.
+ */
+static void ath_regd_override(struct ath_regulatory *reg)
+{
+        printk(KERN_DEBUG "ath: EEPROM regdomain overrode\n");
+        reg->current_rd = 0x00;
+        reg->country_code = CTRY_DEFAULT;
+}
+
 static int __ath_regd_init(struct ath_regulatory *reg)
 {
 	struct country_code_to_enum_rd *country = NULL;
@@ -688,6 +699,7 @@ static int __ath_regd_init(struct ath_regulatory *reg)
 		return -EINVAL;
 
 	ath_regd_sanitize(reg);
+	ath_regd_override(reg);
 
 	printk(KERN_DEBUG "ath: EEPROM regdomain: 0x%0x\n", reg->current_rd);
 
