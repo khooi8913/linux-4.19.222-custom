@@ -249,16 +249,16 @@ void csi_record_status(struct ath_hw *ah, struct ath_rx_status *rxs, struct ar90
     rx_hw_upload_data_valid       = (rxsp->status4 & AR_hw_upload_data_valid) ? 1 : 0;
     rx_hw_upload_data_type        = MS(rxsp->status11, AR_hw_upload_data_type);
 
-    printk(KERN_DEBUG "debug_csi: rxs->rs_phyerr == 0: %d\n", rxs->rs_phyerr == 0);
+    printk(KERN_DEBUG "debug_csi: rxs->rs_phyerr: %d\n", rxs->rs_phyerr);
     printk(KERN_DEBUG "debug_csi: rx_hw_upload_data: %d\n", rx_hw_upload_data);
     printk(KERN_DEBUG "debug_csi: rx_not_sounding: %d\n", rx_not_sounding);
     printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_valid: %d\n", rx_hw_upload_data_valid);
     printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_type: %d\n", rx_hw_upload_data_type);
    
-    if(rxs->rs_phyerr == 0 && rx_hw_upload_data == 0 &&
-                rx_hw_upload_data_valid == 0 && rx_hw_upload_data_type == 0){
-        return;
-    }
+    // if(rxs->rs_phyerr == 0 && rx_hw_upload_data == 0 &&
+    //             rx_hw_upload_data_valid == 0 && rx_hw_upload_data_type == 0){
+    //     return;
+    // }
 
     if(recording && csi_valid == 1)
     {
