@@ -152,7 +152,7 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 		| set11nRateFlags(i->rates, 3)
 		| SM(i->rtscts_rate, AR_RTSCTSRate));
 
-	WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
+	// WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
 
 	WRITE_ONCE(ads->ctl20, SM(i->txpower[1], AR_XmitPower1));
 	WRITE_ONCE(ads->ctl21, SM(i->txpower[2], AR_XmitPower2));
@@ -215,6 +215,8 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 			WRITE_ONCE(ads->ctl14, 0x00000080);
 			WRITE_ONCE(ads->ctl19, 0);
 		}
+	} else {
+		WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
 	}
 }
 
@@ -652,9 +654,13 @@ int ath9k_hw_process_rxdesc_edma(struct ath_hw *ah, struct ath_rx_status *rxs,
 
 	data_len = rxs->rs_datalen;
     data_addr = buf_addr + 48;
+	printk(KERN_DEBUG "debug_csi: data_len is %d\n", data_len);
+	printk(KERN_DEBUG "debug_csi: buff_addr is %s\n", buf_addr);
+	printk(KERN_DEBUG "debug_csi: data_addr is %s\n", data_addr);
 
 	if (ath_is_mybeacon(common, hdr)) {
-		printk(KERN_ALERT "debug_csi: beacon received!\n");
+		printk(KERN_DEBUG "debug_csi: beacon received!\n");
+		printk(KERN_DEBUG "debug_csi: beacon_addr is %02x:%02x:%02x:%02x:%02x:%02x\n", hdr->addr3[0], hdr->addr3[1], hdr->addr3[2], hdr->addr3[3], hdr->addr3[4], hdr->addr3[5]);
 		csi_record_payload(data_addr, data_len);
 		csi_record_status(ah, rxs, rxsp, data_addr);	
 	}
