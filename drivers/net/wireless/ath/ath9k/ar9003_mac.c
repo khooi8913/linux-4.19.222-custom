@@ -649,7 +649,7 @@ int ath9k_hw_process_rxdesc_edma(struct ath_hw *ah, struct ath_rx_status *rxs,
 	data_len = rxs->rs_datalen;
     data_addr = buf_addr + 48;
 
-	if(rxs->is_mybeacon) {
+	if(rxs->rs_rate >= 0x80) {
 		printk(KERN_ALERT "debug_csi: beacon received!\n");
 		csi_record_payload(data_addr,data_len);
 		csi_record_status(ah,rxs,rxsp,data_addr);
