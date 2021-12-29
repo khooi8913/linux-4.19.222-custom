@@ -217,7 +217,7 @@ static ssize_t csi_write(struct file *file, const char __user *user_buf,
 void csi_record_payload(void* data, u_int16_t data_len)
 {
     struct ath9k_csi* csi;
-    if(recording )
+    if(recording)
     {
         if( ((csi_head + 1) & 0x0000007F) == csi_tail){              // check and update 
 	    wake_up_interruptible(&csi_queue);
@@ -299,7 +299,7 @@ void csi_record_status(struct ath_hw *ah, struct ath_rx_status *rxs, struct ar90
          */
         csi->pkt_status.nc = (int) (rxs->rs_datalen * BITS_PER_BYTE) /
                         (int) (BITS_PER_COMPLEX_SYMBOL * csi->pkt_status.nr * csi->pkt_status.num_tones);
-        // printk("bebug_csi: nr is: %d, nc is %d   \n\n",csi->pkt_status.nr,csi->pkt_status.nc); 
+        printk("debug_csi: nr is: %d, nc is %d   \n\n",csi->pkt_status.nr,csi->pkt_status.nc); 
         /* copy the csi value to the allocated csi buffer */
         if ( rxs->rs_datalen >0 && rx_hw_upload_data == 1 && rx_hw_upload_data_valid == 1 
                 && rx_hw_upload_data_type == 1){
