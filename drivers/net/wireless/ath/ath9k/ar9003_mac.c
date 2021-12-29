@@ -646,7 +646,6 @@ int ath9k_hw_process_rxdesc_edma(struct ath_hw *ah, struct ath_rx_status *rxs,
 	if (rxsp->status11 & AR_KeyMiss)
 		rxs->rs_status |= ATH9K_RXERR_KEYMISS;
 
-	struct ath_hw *ah = sc->sc_ah;
 	struct ath_common *common = ath9k_hw_common(ah);
 	struct ieee80211_hdr *hdr;
 	hdr = (struct ieee80211_hdr *) (buf_addr + ah->caps.rx_status_len);
