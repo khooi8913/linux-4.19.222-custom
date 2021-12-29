@@ -219,9 +219,10 @@ void csi_record_payload(void* data, u_int16_t data_len)
     struct ath9k_csi* csi;
     if(recording)
     {
+        printk(KERN_DEBUG "debug_csi: csi_record_payload\n");
         if( ((csi_head + 1) & 0x0000007F) == csi_tail){              // check and update 
-	    wake_up_interruptible(&csi_queue);
-	}
+	        wake_up_interruptible(&csi_queue);
+	    }
 //            csi_tail = (csi_tail + 1) & 0x0000000F;
         
         csi = (struct ath9k_csi*)&csi_buf[csi_head];
@@ -247,6 +248,12 @@ void csi_record_status(struct ath_hw *ah, struct ath_rx_status *rxs, struct ar90
     rx_not_sounding               = (rxsp->status4 & AR_rx_not_sounding) ? 1 : 0;
     rx_hw_upload_data_valid       = (rxsp->status4 & AR_hw_upload_data_valid) ? 1 : 0;
     rx_hw_upload_data_type        = MS(rxsp->status11, AR_hw_upload_data_type);
+
+    printk(KERN_DEBUG "debug_csi: rxs->rs_phyerr == 0: %d\n", rxs->rs_phyerr == 0);
+    printk(KERN_DEBUG "debug_csi: rx_hw_upload_data: %d\n", rx_hw_upload_data);
+    printk(KERN_DEBUG "debug_csi: rx_not_sounding: %d\n", rx_not_sounding);
+    printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_valid: %d\n", rx_hw_upload_data_valid);
+    printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_type: %d\n", rx_hw_upload_data_type);
    
     if(rxs->rs_phyerr == 0 && rx_hw_upload_data == 0 &&
                 rx_hw_upload_data_valid == 0 && rx_hw_upload_data_type == 0){
@@ -255,6 +262,8 @@ void csi_record_status(struct ath_hw *ah, struct ath_rx_status *rxs, struct ar90
 
     if(recording && csi_valid == 1)
     {
+        printk(KERN_DEBUG "debug_csi: csi_record_status\n");
+
         csi = (struct ath9k_csi*)&csi_buf[csi_head];
        
         csi->pkt_status.tstamp    = rxs->rs_tstamp;     // time stamp of the rx packet 
