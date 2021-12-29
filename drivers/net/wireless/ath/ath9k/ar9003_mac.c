@@ -152,29 +152,70 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 		| set11nRateFlags(i->rates, 3)
 		| SM(i->rtscts_rate, AR_RTSCTSRate));
 
+	WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
+
 	WRITE_ONCE(ads->ctl20, SM(i->txpower[1], AR_XmitPower1));
 	WRITE_ONCE(ads->ctl21, SM(i->txpower[2], AR_XmitPower2));
 	WRITE_ONCE(ads->ctl22, SM(i->txpower[3], AR_XmitPower3));
 
-	rate1 = (ads->ctl14 >> 24) & 0xff;
-    rate2 = (ads->ctl14 >> 16) & 0xff;
-    rate3 = (ads->ctl14 >> 8)  & 0xff;
-    rate4 = (ads->ctl14 >> 0)  & 0xff;
+	// rate1 = (ads->ctl14 >> 24) & 0xff;
+    // rate2 = (ads->ctl14 >> 16) & 0xff;
+    // rate3 = (ads->ctl14 >> 8)  & 0xff;
+    // rate4 = (ads->ctl14 >> 0)  & 0xff;
 
-    if (rate1 >= 0x80 || rate2 >= 0x80 || rate3 >= 0x80){
-	    WRITE_ONCE(ads->ctl19, 0);
-		WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
-		WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
-		WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
-		WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
-    }else{
-	    WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
-    }
-    if (rate4 >= 0x80){
-	    WRITE_ONCE(ads->ctl19, 0);
-    }else{
-	    WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
-    }
+    // if (rate1 >= 0x80 || rate2 >= 0x80 || rate3 >= 0x80){
+	//     WRITE_ONCE(ads->ctl19, 0);
+	// 	WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
+	// 	WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
+	// 	WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
+	// 	WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
+    // }else{
+	//     WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
+    // }
+    // if (rate4 >= 0x80){
+	//     WRITE_ONCE(ads->ctl19, 0);
+    // }else{
+	//     WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
+    // }
+
+	/*
+	 * Beacon frames only.
+	 */
+	u32 is_beacon = READ_ONCE(ads->ctl12) & 0x00300000;
+	if(is_beacon == 0x00300000) {
+		rate1 = (ads->ctl14 >> 24) & 0xff;
+		rate2 = (ads->ctl14 >> 16) & 0xff;
+		rate3 = (ads->ctl14 >> 8)  & 0xff;
+		rate4 = (ads->ctl14 >> 0)  & 0xff;
+
+		WRITE_ONCE(ads->ctl19, 0);
+
+		if(rate1 != 0) {
+			WRITE_ONCE(ads->ctl14, 0x80000000);
+			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
+
+			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
+			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
+			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
+		} else if(rate2 != 0) {
+			WRITE_ONCE(ads->ctl14, 0x00800000);
+			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
+
+			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
+			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
+			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
+		} else if(rate3 != 0) {
+			WRITE_ONCE(ads->ctl14, 0x00008000);
+			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
+
+			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
+			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
+			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
+		}else {
+			WRITE_ONCE(ads->ctl14, 0x00000080);
+			WRITE_ONCE(ads->ctl19, 0);
+		}
+	}
 }
 
 static u16 ar9003_calc_ptr_chksum(struct ar9003_txc *ads)
