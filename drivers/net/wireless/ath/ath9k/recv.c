@@ -901,18 +901,6 @@ static int ath9k_rx_skb_preprocess(struct ath_softc *sc,
 	if (ath_is_mybeacon(common, hdr)) {
 		RX_STAT_INC(rx_beacons);
 		rx_stats->is_mybeacon = true;
-
-		if(rx_stats->rs_rate >= 0x80) {
-			void *data_addr;
-			u_int16_t data_len;
-			struct ar9003_rxs *rxsp = skb->data;
-
-			data_len = rxs->rs_datalen;
-    		data_addr = skb->data + 48;
-
-			csi_record_payload(data_addr, data_len);
-			csi_record_status(ah, rx_stats, rxsp, data_addr);
-		}
 	}
 
 	/*
