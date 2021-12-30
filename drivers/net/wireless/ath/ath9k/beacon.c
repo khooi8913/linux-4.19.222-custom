@@ -249,6 +249,7 @@ static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
 	struct ath_txq *cabq = sc->beacon.cabq;
 	struct ieee80211_tx_info *info;
 	struct ieee80211_mgmt *mgmt_hdr;
+	struct ieee80211_qos_hdr *qos_hdr;
 	int cabq_depth;
 
 	if (avp->av_bcbuf == NULL)
