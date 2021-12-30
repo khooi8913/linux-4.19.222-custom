@@ -184,7 +184,7 @@ static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
 		}
 	}
 
-	ath9k_beacon_setup(sc, vif, bf, info->control.rates[0x80].idx);
+	ath9k_beacon_setup(sc, vif, bf, info->control.rates[0].idx);
 
 	if (skb)
 		ath_tx_cabq(hw, vif, skb);
