@@ -255,10 +255,10 @@ void csi_record_status(struct ath_hw *ah, struct ath_rx_status *rxs, struct ar90
     printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_valid: %d\n", rx_hw_upload_data_valid);
     printk(KERN_DEBUG "debug_csi: rx_hw_upload_data_type: %d\n", rx_hw_upload_data_type);
    
-    // if(rxs->rs_phyerr == 0 && rx_hw_upload_data == 0 &&
-    //             rx_hw_upload_data_valid == 0 && rx_hw_upload_data_type == 0){
-    //     return;
-    // }
+    if(rxs->rs_phyerr == 0 && rx_hw_upload_data == 0 &&
+                rx_hw_upload_data_valid == 0 && rx_hw_upload_data_type == 0){
+        return;
+    }
 
     if(recording && csi_valid == 1)
     {

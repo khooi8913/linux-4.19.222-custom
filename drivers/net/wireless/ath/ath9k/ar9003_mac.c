@@ -181,7 +181,7 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 	/*
 	 * Beacon frames only.
 	 */
-	u32 is_beacon = READ_ONCE(ads->ctl12) & 0x00300000;
+	u32 is_beacon = ads->ctl12 & 0x00300000;
 	if(is_beacon == 0x00300000) {
 		rate1 = (ads->ctl14 >> 24) & 0xff;
 		rate2 = (ads->ctl14 >> 16) & 0xff;
@@ -191,29 +191,20 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 		WRITE_ONCE(ads->ctl19, 0);
 
 		if(rate1 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x80000000);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
-
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
 		} else if(rate2 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x00800000);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
-
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
 		} else if(rate3 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x00008000);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
-
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
-		}else {
-			WRITE_ONCE(ads->ctl14, 0x00000080);
-			WRITE_ONCE(ads->ctl19, 0);
 		}
 	} else {
 		WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
