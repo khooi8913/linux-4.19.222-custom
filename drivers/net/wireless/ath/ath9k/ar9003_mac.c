@@ -610,10 +610,20 @@ int ath9k_hw_process_rxdesc_edma(struct ath_hw *ah, struct ath_rx_status *rxs,
 
     if (rxsp->status11 & AR_CRCErr){
         if (rxs->rs_rate >= 0x80){
+			printk(KERN_DEBUG "debug_csi: first condition\n");
+			printk(KERN_DEBUG "debug_csi: data_len is %d\n", data_len);
+			printk(KERN_DEBUG "debug_csi: buff_addr is %s\n", buf_addr);
+			printk(KERN_DEBUG "debug_csi: data_addr is %s\n", data_addr);
+
             csi_record_payload(data_addr,data_len);
             csi_record_status(ah,rxs,rxsp,data_addr);
         }
     }else{
+		printk(KERN_DEBUG "debug_csi: second condition\n");
+		printk(KERN_DEBUG "debug_csi: data_len is %d\n", data_len);
+		printk(KERN_DEBUG "debug_csi: buff_addr is %s\n", buf_addr);
+		printk(KERN_DEBUG "debug_csi: data_addr is %s\n", data_addr);
+		
         if  (rxs->rs_more == 1)
             csi_record_payload(data_addr,data_len);
 
