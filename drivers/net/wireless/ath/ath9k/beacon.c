@@ -64,6 +64,51 @@ static void ath9k_beaconq_config(struct ath_softc *sc)
 	}
 }
 
+// /*
+//  *  Associates the beacon frame buffer with a transmit descriptor.  Will set
+//  *  up rate codes, and channel flags. Beacons are always sent out at the
+//  *  lowest rate, and are not retried.
+// */
+// static void ath9k_beacon_setup(struct ath_softc *sc, struct ieee80211_vif *vif,
+// 			     struct ath_buf *bf, int rateidx)
+// {
+// 	struct sk_buff *skb = bf->bf_mpdu;
+// 	struct ath_hw *ah = sc->sc_ah;
+// 	struct ath_common *common = ath9k_hw_common(ah);
+// 	struct ath_tx_info info;
+// 	struct ieee80211_supported_band *sband;
+// 	u8 chainmask = ah->txchainmask;
+// 	u8 i, rate = 0;
+
+// 	sband = &common->sbands[sc->cur_chandef.chan->band];
+// 	rate = sband->bitrates[rateidx].hw_value;
+// 	if (vif->bss_conf.use_short_preamble)
+// 		rate |= sband->bitrates[rateidx].hw_value_short;
+
+// 	memset(&info, 0, sizeof(info));
+// 	info.pkt_len = skb->len + FCS_LEN;
+// 	info.type = ATH9K_PKT_TYPE_BEACON;
+// 	for (i = 0; i < 4; i++)
+// 		info.txpower[i] = MAX_RATE_POWER;
+// 	info.keyix = ATH9K_TXKEYIX_INVALID;
+// 	info.keytype = ATH9K_KEY_TYPE_CLEAR;
+// 	info.flags = ATH9K_TXDESC_NOACK | ATH9K_TXDESC_CLRDMASK;
+
+// 	info.buf_addr[0] = bf->bf_buf_addr;
+// 	info.buf_len[0] = roundup(skb->len, 4);
+
+// 	info.is_first = true;
+// 	info.is_last = true;
+
+// 	info.qcu = sc->beacon.beaconq;
+
+// 	info.rates[0].Tries = 1;
+// 	info.rates[0].Rate = rate;
+// 	info.rates[0].ChSel = ath_txchainmask_reduction(sc, chainmask, rate);
+
+// 	ath9k_hw_set_txdesc(ah, bf->bf_desc, &info);
+// }
+
 /*
  *  Associates the beacon frame buffer with a transmit descriptor.  Will set
  *  up rate codes, and channel flags. Beacons are always sent out at the
@@ -87,7 +132,7 @@ static void ath9k_beacon_setup(struct ath_softc *sc, struct ieee80211_vif *vif,
 
 	memset(&info, 0, sizeof(info));
 	info.pkt_len = skb->len + FCS_LEN;
-	info.type = ATH9K_PKT_TYPE_BEACON;
+	info.type = ATH9K_PKT_TYPE_NORMAL;
 	for (i = 0; i < 4; i++)
 		info.txpower[i] = MAX_RATE_POWER;
 	info.keyix = ATH9K_TXKEYIX_INVALID;
@@ -109,6 +154,90 @@ static void ath9k_beacon_setup(struct ath_softc *sc, struct ieee80211_vif *vif,
 	ath9k_hw_set_txdesc(ah, bf->bf_desc, &info);
 }
 
+// static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
+// 					     struct ieee80211_vif *vif)
+// {
+// 	struct ath_softc *sc = hw->priv;
+// 	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+// 	struct ath_buf *bf;
+// 	struct ath_vif *avp = (void *)vif->drv_priv;
+// 	struct sk_buff *skb;
+// 	struct ath_txq *cabq = sc->beacon.cabq;
+// 	struct ieee80211_tx_info *info;
+// 	struct ieee80211_mgmt *mgmt_hdr;
+// 	int cabq_depth;
+
+// 	if (avp->av_bcbuf == NULL)
+// 		return NULL;
+
+// 	bf = avp->av_bcbuf;
+// 	skb = bf->bf_mpdu;
+// 	if (skb) {
+// 		dma_unmap_single(sc->dev, bf->bf_buf_addr,
+// 				 skb->len, DMA_TO_DEVICE);
+// 		dev_kfree_skb_any(skb);
+// 		bf->bf_buf_addr = 0;
+// 		bf->bf_mpdu = NULL;
+// 	}
+
+// 	skb = ieee80211_beacon_get(hw, vif);
+// 	if (skb == NULL)
+// 		return NULL;
+
+// 	bf->bf_mpdu = skb;
+
+// 	mgmt_hdr = (struct ieee80211_mgmt *)skb->data;
+// 	mgmt_hdr->u.beacon.timestamp = avp->tsf_adjust;
+
+// 	info = IEEE80211_SKB_CB(skb);
+
+// 	ath_assign_seq(common, skb);
+
+// 	/* Always assign NOA attr when MCC enabled */
+// 	if (ath9k_is_chanctx_enabled())
+// 		ath9k_beacon_add_noa(sc, avp, skb);
+
+// 	bf->bf_buf_addr = dma_map_single(sc->dev, skb->data,
+// 					 skb->len, DMA_TO_DEVICE);
+// 	if (unlikely(dma_mapping_error(sc->dev, bf->bf_buf_addr))) {
+// 		dev_kfree_skb_any(skb);
+// 		bf->bf_mpdu = NULL;
+// 		bf->bf_buf_addr = 0;
+// 		ath_err(common, "dma_mapping_error on beaconing\n");
+// 		return NULL;
+// 	}
+
+// 	skb = ieee80211_get_buffered_bc(hw, vif);
+
+// 	/*
+// 	 * if the CABQ traffic from previous DTIM is pending and the current
+// 	 *  beacon is also a DTIM.
+// 	 *  1) if there is only one vif let the cab traffic continue.
+// 	 *  2) if there are more than one vif and we are using staggered
+// 	 *     beacons, then drain the cabq by dropping all the frames in
+// 	 *     the cabq so that the current vifs cab traffic can be scheduled.
+// 	 */
+// 	spin_lock_bh(&cabq->axq_lock);
+// 	cabq_depth = cabq->axq_depth;
+// 	spin_unlock_bh(&cabq->axq_lock);
+
+// 	if (skb && cabq_depth) {
+// 		if (sc->cur_chan->nvifs > 1) {
+// 			ath_dbg(common, BEACON,
+// 				"Flushing previous cabq traffic\n");
+// 			ath_draintxq(sc, cabq);
+// 		}
+// 	}
+
+// 	ath9k_beacon_setup(sc, vif, bf, info->control.rates[0].idx);
+
+// 	if (skb)
+// 		ath_tx_cabq(hw, vif, skb);
+
+// 	return bf;
+// }
+
+/* Override to send NDPs instead of Beacon frames */
 static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
 					     struct ieee80211_vif *vif)
 {
@@ -135,22 +264,23 @@ static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
 		bf->bf_mpdu = NULL;
 	}
 
-	skb = ieee80211_beacon_get(hw, vif);
+	skb = ieee80211_nullfunc_get(hw, vif, false);
 	if (skb == NULL)
 		return NULL;
 
 	bf->bf_mpdu = skb;
 
-	mgmt_hdr = (struct ieee80211_mgmt *)skb->data;
-	mgmt_hdr->u.beacon.timestamp = avp->tsf_adjust;
+	// mgmt_hdr = (struct ieee80211_mgmt *)skb->data;
+	// mgmt_hdr->u.beacon.timestamp = avp->tsf_adjust;
+	qos_hdr = (struct ieee80211_qos_hdr *)skb->data;
 
 	info = IEEE80211_SKB_CB(skb);
 
 	ath_assign_seq(common, skb);
 
 	/* Always assign NOA attr when MCC enabled */
-	if (ath9k_is_chanctx_enabled())
-		ath9k_beacon_add_noa(sc, avp, skb);
+	// if (ath9k_is_chanctx_enabled())
+	// 	ath9k_beacon_add_noa(sc, avp, skb);
 
 	bf->bf_buf_addr = dma_map_single(sc->dev, skb->data,
 					 skb->len, DMA_TO_DEVICE);
@@ -184,7 +314,7 @@ static struct ath_buf *ath9k_beacon_generate(struct ieee80211_hw *hw,
 		}
 	}
 
-	ath9k_beacon_setup(sc, vif, bf, info->control.rates[0].idx);
+	ath9k_beacon_setup(sc, vif, bf, info->control.rates[0x80].idx);
 
 	if (skb)
 		ath_tx_cabq(hw, vif, skb);
