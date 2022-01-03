@@ -593,7 +593,9 @@ static void ath9k_cache_beacon_config(struct ath_softc *sc,
 	ath_dbg(common, BEACON,
 		"Caching beacon data for BSS: %pM\n", bss_conf->bssid);
 
-	cur_conf->beacon_interval = bss_conf->beacon_int;
+	// cur_conf->beacon_interval = bss_conf->beacon_int;
+	/* Override beacon interval */
+	cur_conf->beacon_interval = 1;
 	cur_conf->dtim_period = bss_conf->dtim_period;
 	cur_conf->dtim_count = 1;
 	cur_conf->ibss_creator = bss_conf->ibss_creator;
@@ -604,8 +606,8 @@ static void ath9k_cache_beacon_config(struct ath_softc *sc,
 	 * infinite loop by using a bit safer value instead. To be safe,
 	 * do sanity check on beacon interval for all operating modes.
 	 */
-	if (cur_conf->beacon_interval == 0)
-		cur_conf->beacon_interval = 100;
+	// if (cur_conf->beacon_interval == 0)
+	// 	cur_conf->beacon_interval = 100;
 
 	cur_conf->bmiss_timeout =
 		ATH_DEFAULT_BMISS_LIMIT * cur_conf->beacon_interval;

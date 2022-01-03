@@ -19,6 +19,8 @@
 #include "ar9003_mci.h"
 #include "ar9003_csi.h"
 
+long curr_index = 0;
+
 static void ar9003_hw_rx_enable(struct ath_hw *hw)
 {
 	REG_WRITE(hw, AR_CR, 0);
@@ -183,6 +185,9 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 	 */
 	u32 is_beacon = ads->ctl12 & 0x00300000;
 	if(is_beacon == 0x00300000) {
+		curr_index = curr_index + 1;
+		int next_rate = 0x80 + (curr_index % 8);
+
 		rate1 = (ads->ctl14 >> 24) & 0xff;
 		rate2 = (ads->ctl14 >> 16) & 0xff;
 		rate3 = (ads->ctl14 >> 8)  & 0xff;
@@ -191,28 +196,28 @@ ar9003_set_txdesc(struct ath_hw *ah, void *ds, struct ath_tx_info *i)
 		WRITE_ONCE(ads->ctl19, 0);
 
 		if(rate1 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x80000000);
+			WRITE_ONCE(ads->ctl14, (next_rate << 24) & 0xff);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
 
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
 		} else if(rate2 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x00800000);
+			WRITE_ONCE(ads->ctl14, (next_rate << 16) & 0xff);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
 
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
 		} else if(rate3 != 0) {
-			WRITE_ONCE(ads->ctl14, 0x00008000);
+			WRITE_ONCE(ads->ctl14, (next_rate << 8) & 0xff);
 			WRITE_ONCE(ads->ctl13, READ_ONCE(ads->ctl13)&~(AR_xmit_data_tries1 | AR_xmit_data_tries2 | AR_xmit_data_tries3));
 
 			WRITE_ONCE(ads->ctl20, READ_ONCE(ads->ctl20)&0x3f000000);
 			WRITE_ONCE(ads->ctl21, READ_ONCE(ads->ctl21)&0x3f000000);
 			WRITE_ONCE(ads->ctl22, READ_ONCE(ads->ctl22)&0x3f000000);
 		}else {
-			WRITE_ONCE(ads->ctl14, 0x00000080);
+			WRITE_ONCE(ads->ctl14, (next_rate << 0) & 0xff);
 		}
 	} else {
 		WRITE_ONCE(ads->ctl19, AR_Not_Sounding);
